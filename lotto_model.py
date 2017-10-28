@@ -1,9 +1,10 @@
 import tensorflow as tf
 
-from preprocessing import lenet_preprocessing
-
 slim = tf.contrib.slim
 
+def preprocess(inputs, labels):
+    dataset['input']
+    dataset['label']
 
 def lenet(images):
     net = slim.conv2d(images, 20, [5,5], scope='conv1')
@@ -16,18 +17,10 @@ def lenet(images):
     return net
 
 
-def load_batch(dataset, batch_size=32, height=28, width=28, is_training=False):
-    data_provider = slim.dataset_data_provider.DatasetDataProvider(dataset)
+def load_batch(dataset, batch_size=32, is_training=False):
+    inputs, labels = preprocess(dataset['input'], dataset['label'])
 
-    image, label = data_provider.get(['image', 'label'])
-
-    image = lenet_preprocessing.preprocess_image(
-        image,
-        height,
-        width,
-        is_training)
-
-    images, labels = tf.train.batch(
+    images, labels = tf.train.  batch(
         [image, label],
         batch_size=batch_size,
         allow_smaller_final_batch=True)
