@@ -3,6 +3,9 @@ import tensorflow as tf
 slim = tf.contrib.slim
 
 def preprocess(inputs, labels):
+    input_list = inputs
+    input = tf.zeros([46])
+    input
     dataset['input']
     dataset['label']
 
@@ -20,7 +23,7 @@ def lenet(images):
 def load_batch(dataset, batch_size=32, is_training=False):
     inputs, labels = preprocess(dataset['input'], dataset['label'])
 
-    images, labels = tf.train.  batch(
+    images, labels = tf.train.batch(
         [image, label],
         batch_size=batch_size,
         allow_smaller_final_batch=True)
