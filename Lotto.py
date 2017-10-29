@@ -10,10 +10,10 @@ slim = tf.contrib.slim
 
 flags = tf.app.flags
 flags.DEFINE_integer('batch_size', 4, 'Batch size.')
-flags.DEFINE_integer('num_batches', None,
-                     'Num of batches to train (epochs).')
-flags.DEFINE_string('log_dir', './log/train',
-                    'Directory with the log data.')
+flags.DEFINE_integer('num_batches', None, 'Num of batches to train (epochs).')
+flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
+flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
+flags.DEFINE_string('log_dir', './log/train', 'Directory with the log data.')
 flags.DEFINE_float('test_size', .1, 'test_set_size')
 FLAGS = flags.FLAGS
 
@@ -35,34 +35,30 @@ def generate_dataset(subset='train'):
         print ("Train data set is {}".format(train_data))
         print ("Test data set is {}".format(test_data))
 
+        inputs = []
+        labels = []
         for idx, lucky in enumerate(lucky_data):
             lucky_input = []
-            lucky_label = []
             lucky = lucky[1:]
             lucky_date = datetime.date(int(lucky[0]), int(lucky[1]), int(lucky[2]))
             lucky_input.append(lucky_date.strftime("%Y%m%d"))
-            for i in lucky[3:]:
-                str_num = '{:02d}'.format(int(i))
-                print(str_num)
-                lucky_label.append(str_num)
-            print(lucky_date.strftime("%Y%m%d"))
-            random_lucky = list(np.random.randint(0, high=45, size=7))
+            random_lucky = list(np.random.randint(1, high=45, size=7))
+            random_lucky.sort()
             for i in random_lucky:
                 str_num = '{:02d}'.format(i)
-                print(str_num)
                 lucky_input.append(str_num)
-            print(lucky_input)
-            print(lucky_label)
-            lucky_data[idx] = lucky
-            lucky = list(map(int, lucky))
 
-        for i in range(train_data):
-            train['input'].append(lucky_data[i][0:10])
-            train['label'].append(lucky_data[i][10:])
+            separate_input = [input for item in lucky_input for input in item[:]]
+            separate_input = list(map(int, separate_input))
+            inputs.append(separate_input)
 
-        for i in range(test_data):
-            test['input'].append(lucky_data[train_data + i][0:10])
-            test['label'].append(lucky_data[train_data + i][10:])
+            lucky_label = [label for label in lucky[3:]]
+            labels.append(list(map(int, lucky_label)))
+
+        train['input'] = inputs[:train_data]
+        train['label'] = labels[:train_data]
+        test['input'] = inputs[train_data :]
+        test['label'] = labels[train_data :]
 
         print(train['input'][0])
         print(train['label'][0])
@@ -75,32 +71,34 @@ def main(args):
     # load the dataset
     dataset = generate_dataset('train')
 
-    print (dataset)
+    # print (dataset)
 
-    for input in dataset['input']:
-        seperate_item = []
-        for item in input:
-            item = [int(i) for i in str(item)]
-            seperate_item += item
-        print (seperate_item)
+    # for input in dataset['input']:
+    #     print (input)
+    #
+    # for label in dataset['label']:
+    #     print(label)
     # load batch of dataset
-    # images, labels = load_batch(
-    #     dataset,
-    #     FLAGS.batch_size,
-    #     is_training=True)
-    #
-    # # run the image through the model
-    # predictions = lenet(images)
-    #
-    # # get the cross-entropy loss
-    # one_hot_labels = slim.one_hot_encoding(
-    #     labels,
-    #     dataset.num_classes)
-    # slim.losses.softmax_cross_entropy(
-    #     predictions,
-    #     one_hot_labels)
-    # total_loss = slim.losses.get_total_loss()
-    # tf.summary.scalar('loss', total_loss)
+    inputs, labels = load_batch(
+        dataset,
+        FLAGS.batch_size,
+        is_training=True)
+
+    print(inputs)
+    print(labels)
+
+    # run the image through the model
+    predictions = lenet(inputs, FLAGS.filter_sizes)
+
+    # get the cross-entropy loss
+    one_hot_labels = slim.one_hot_encoding(
+        labels,
+        dataset.num_classes)
+    slim.losses.softmax_cross_entropy(
+        predictions,
+        one_hot_labels)
+    total_loss = slim.losses.get_total_loss()
+    tf.summary.scalar('loss', total_loss)
     #
     # # use RMSProp to optimize
     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9)
